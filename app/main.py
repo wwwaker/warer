@@ -4,9 +4,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.routes import router
 
 app = FastAPI(
-    title="MathWaker",
-    description="具备离线基础运算 + 云端符号引擎的双模科学计算器后端",
-    version="0.1.0",
+    title="Warer",
+    description="简洁易用的科学计算器后端 —— 轻量上手，满足中学到大学的一般数学需求",
+    version="1.0.0",
 )
 
 app.add_middleware(
