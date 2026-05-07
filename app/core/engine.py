@@ -24,6 +24,8 @@ class SympyEngine:
         expr = re.sub(r'(\d)([a-zA-Z(])', r'\1*\2', expr)
         expr = re.sub(r'(\))(\d)', r'\1**\2', expr)
         expr = re.sub(r'(\))([a-zA-Z(])', r'\1*\2', expr)
+        # 处理 sin(x)^2 -> (sin(x))^2
+        expr = re.sub(r'(\w+\([^)]*\))\^(\d+)', r'(\1)**\2', expr)
         return expr
 
     @classmethod

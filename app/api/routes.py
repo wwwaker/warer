@@ -6,7 +6,7 @@ from app.core.engine import SympyEngine
 router = APIRouter()
 
 
-@router.post("/compute", response_model=ComputeResponse)
+@router.post("/v1/compute", response_model=ComputeResponse)
 def compute(req: ComputeRequest) -> ComputeResponse:
     result, error, elapsed = SympyEngine.process_expression(req.payload.expression)
 
