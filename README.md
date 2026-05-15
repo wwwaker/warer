@@ -1,15 +1,22 @@
-# Warer
+# Warer Backend
 
-简洁易用的科学计算器后端 —— 轻量上手，满足中学到大学的一般数学需求。
+> 简洁小巧、上手容易的科学计算器后端服务
 
-## 技术栈
+Warer 后端采用 Python + FastAPI + SymPy 技术栈，提供符号计算能力，支持求导、积分、解方程等高级数学运算。
 
-- Python 3.10+
-- FastAPI
-- SymPy
-- Uvicorn
+***
 
-## 快速开始
+## 🌐 项目导航
+
+| 项目            | 仓库地址                                                      | 状态     |
+| :------------ | :-------------------------------------------------------- | :----- |
+| **主仓库**       | [warer](https://github.com/wwwaker/warer)                 | ✅ 活跃   |
+| **Web 前端**    | [warer-web](https://github.com/wwwaker/warer-web)         | ✅ 活跃   |
+| **Android 端** | [warer-android](https://github.com/wwwaker/warer-android) | 🔄 待实现 |
+
+***
+
+## 🚀 快速开始
 
 ### 1. 创建虚拟环境并安装依赖
 
@@ -33,14 +40,47 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
 浏览器访问 `http://localhost:8000/docs` 查看 API 文档（Swagger UI）。
 
-## API
+***
+
+## 🔧 技术栈
+
+- Python 3.10+
+- FastAPI
+- SymPy（符号计算引擎）
+- Uvicorn（ASGI 服务器）
+
+***
+
+## 📁 项目结构
+
+```
+app/
+├── api/
+│   └── routes.py      # API 路由定义
+├── core/
+│   └── engine.py      # 符号计算引擎封装
+├── models/
+│   └── schemas.py     # 请求/响应数据模型
+└── main.py            # 应用入口
+```
+
+***
+
+## 🔌 API 接口
 
 ### POST /v1/compute
 
-请求体：
+执行数学表达式计算
+
+**请求体：**
 
 ```json
 {
+  "metadata": {
+    "client_id": "web_client",
+    "timestamp": 1714982400,
+    "session_id": "string"
+  },
   "payload": {
     "expression": "diff(x^2 + sin(x), x)",
     "engine_hint": "auto",
@@ -53,7 +93,7 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 }
 ```
 
-响应体：
+**响应体：**
 
 ```json
 {
@@ -69,3 +109,45 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
   "error": null
 }
 ```
+
+***
+
+## ✨ 已实现功能
+
+### 数学运算
+
+- ✅ **求导** (`diff`) — 支持单变量和多变量求导
+- ✅ **积分** (`integrate`) — 支持不定积分和定积分
+- ✅ **解方程** (`solve`) — 支持多项式和部分超越方程
+- ✅ **化简** (`simplify`) — 代数表达式化简
+- ✅ **虚数计算** — 支持 `i` / `j` 作为虚数单位
+
+### 系统特性
+
+- ✅ **嵌套命令检测** — 支持复合表达式计算，30s 超时保护
+- ✅ **浮点精度优化** — 智能舍入，常见分数/整数识别
+- ✅ **错误处理** — 详细的错误类型和位置信息
+
+***
+
+## 📝 待实现功能
+
+- [ ] **`nsolve`** — 数值求根（适用于无解析解的方程）
+- [ ] **矩阵运算** — 矩阵创建、运算和求逆
+- [ ] **微分方程** — `dsolve` 求解
+- [ ] **方程组求解** — `linsolve` / `nonlinsolve`
+- [ ] **图像分析** — 零点、极值点计算（用于前端标注）
+- [ ] **缓存策略** — Redis 缓存重复计算结果
+
+***
+
+## 📜 设计理念
+
+**精准、锋利、一触即发**
+
+- **离线优先**：前端优先使用本地引擎，复杂计算才调用云端
+- **统一协议**：与 Web、Android 端共享统一的数据协议
+- **轻量高效**：专注核心计算能力，避免功能冗余
+
+***
+
