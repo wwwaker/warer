@@ -15,7 +15,7 @@ class SympyEngine:
     _TRANSFORMATIONS = standard_transformations + (implicit_multiplication_application,)
 
     _CMD_PATTERN = re.compile(
-        r'^(diff|derivative|int(?:egrate)?|solve)\s*\(', re.IGNORECASE
+        r'^(diff|derivative|int(?:egrate)?|solve|nsolve|dsolve|linsolve|limit|series|taylor)\s*\(', re.IGNORECASE
     )
     _SIMPLIFY_KEYWORDS = re.compile(r'^simplify\s*\(\s*(.+)\s*\)$', re.IGNORECASE | re.DOTALL)
 
@@ -190,6 +190,218 @@ class SympyEngine:
         return solutions, 'solve'
 
     @classmethod
+    def _handle_nsolve(cls, expr: str) -> tuple[Any, str]:
+        m = re.match(r'^nsolve\s*\(', expr, re.IGNORECASE)
+        inner_start = m.end()
+        depth = 1
+        i = inner_start
+        commas = []
+
+        while i < len(expr) and depth > 0:
+            ch = expr[i]
+            if ch == '(':
+                depth += 1
+            elif ch == ')':
+                depth -= 1
+            elif ch == ',' and depth == 1:
+                commas.append(i)
+            i += 1
+
+        if len(commas) < 2:
+            raise SyntaxError("nsolve 需要 3 个参数: nsolve(expr, var, guess)，例如 nsolve(x^5-x-1, x, 1)")
+
+        first_comma = commas[0]
+        second_comma = commas[1]
+
+        inner_expr = expr[inner_start:first_comma].strip()
+        var = expr[first_comma + 1:second_comma].strip()
+        guess_str = expr[second_comma + 1:i - 1].strip()
+
+        preprocessed = cls._preprocess(inner_expr)
+        parsed = cls._parse(preprocessed)
+        var_sym = sympy.Symbol(var)
+
+        try:
+            guess_val = float(guess_str)
+        except ValueError:
+            guess_val = float(sympy.sympify(guess_str))
+
+        result = sympy.nsolve(parsed, var_sym, guess_val)
+        return result, 'nsolve'
+
+    @classmethod
+    def _handle_dsolve(cls, expr: str) -> tuple[Any, str]:
+        m = re.match(r'^dsolve\s*\(', expr, re.IGNORECASE)
+        inner_start = m.end()
+        depth = 1
+        i = inner_start
+        commas = []
+
+        while i < len(expr) and depth > 0:
+            ch = expr[i]
+            if ch == '(':
+                depth += 1
+            elif ch == ')':
+                depth -= 1
+            elif ch == ',' and depth == 1:
+                commas.append(i)
+            i += 1
+
+        if len(commas) < 1:
+            raise SyntaxError("dsolve 需要参数: dsolve(eq, f(x))，例如 dsolve(diff(f(x), x) - f(x), f(x))")
+
+        first_comma = commas[0]
+        eq_str = expr[inner_start:first_comma].strip()
+
+        if len(commas) >= 2:
+            second_comma = commas[1]
+            func_str = expr[first_comma + 1:second_comma].strip()
+        else:
+            func_str = expr[first_comma + 1:i - 1].strip()
+
+        eq_str = eq_str.replace('^', '**')
+        eq_parsed = cls._parse_strict(eq_str)
+
+        func_sym = sympy.sympify(func_str)
+        result = sympy.dsolve(eq_parsed, func_sym)
+        return result, 'dsolve'
+
+    @classmethod
+    def _handle_linsolve(cls, expr: str) -> tuple[Any, str]:
+        m = re.match(r'^linsolve\s*\(', expr, re.IGNORECASE)
+        inner_start = m.end()
+        depth = 1
+        bracket_depth = 0
+        i = inner_start
+        commas = []
+
+        while i < len(expr) and depth > 0:
+            ch = expr[i]
+            if ch == '(':
+                depth += 1
+            elif ch == ')':
+                depth -= 1
+            elif ch == '[':
+                bracket_depth += 1
+            elif ch == ']':
+                bracket_depth -= 1
+            elif ch == ',' and depth == 1 and bracket_depth == 0:
+                commas.append(i)
+            i += 1
+
+        if len(commas) < 1:
+            raise SyntaxError("linsolve 需要参数: linsolve([eq1, eq2, ...], [x, y, ...])，例如 linsolve([x+y-1, x-y-3], [x, y])")
+
+        first_comma = commas[0]
+        eqs_str = expr[inner_start:first_comma].strip()
+        vars_str = expr[first_comma + 1:i - 1].strip()
+
+        if not (eqs_str.startswith('[') and eqs_str.endswith(']')):
+            raise SyntaxError("linsolve 的方程列表需用方括号包裹，例如 linsolve([x+y-1, x-y-3], [x, y])")
+        if not (vars_str.startswith('[') and vars_str.endswith(']')):
+            raise SyntaxError("linsolve 的变量列表需用方括号包裹，例如 linsolve([x+y-1, x-y-3], [x, y])")
+
+        eqs_inner = eqs_str[1:-1]
+        eq_strs = [e.strip() for e in eqs_inner.split(',') if e.strip()]
+
+        parsed_eqs = []
+        for eq_s in eq_strs:
+            eq_s = eq_s.replace('^', '**')
+            parsed_eqs.append(sympy.sympify(eq_s))
+
+        vars_inner = vars_str[1:-1]
+        var_names = [v.strip() for v in vars_inner.split(',') if v.strip()]
+        var_syms = [sympy.Symbol(v) for v in var_names]
+
+        result = sympy.linsolve(parsed_eqs, var_syms)
+        return result, 'linsolve'
+
+    @classmethod
+    def _handle_limit(cls, expr: str) -> tuple[Any, str]:
+        m = re.match(r'^limit\s*\(', expr, re.IGNORECASE)
+        inner_start = m.end()
+        depth = 1
+        i = inner_start
+        commas = []
+
+        while i < len(expr) and depth > 0:
+            ch = expr[i]
+            if ch == '(':
+                depth += 1
+            elif ch == ')':
+                depth -= 1
+            elif ch == ',' and depth == 1:
+                commas.append(i)
+            i += 1
+
+        if len(commas) < 2:
+            raise SyntaxError("limit 需要 3 个参数: limit(expr, var, point)，例如 limit(sin(x)/x, x, 0)")
+
+        first_comma = commas[0]
+        second_comma = commas[1]
+
+        inner_expr = expr[inner_start:first_comma].strip()
+        var = expr[first_comma + 1:second_comma].strip()
+        point_str = expr[second_comma + 1:i - 1].strip()
+
+        preprocessed = cls._preprocess(inner_expr)
+        parsed = cls._parse(preprocessed)
+        var_sym = sympy.Symbol(var)
+        point = sympy.sympify(point_str)
+
+        result = sympy.limit(parsed, var_sym, point)
+        return result, 'limit'
+
+    @classmethod
+    def _handle_series(cls, expr: str) -> tuple[Any, str]:
+        m = re.match(r'^(?:series|taylor)\s*\(', expr, re.IGNORECASE)
+        inner_start = m.end()
+        depth = 1
+        i = inner_start
+        commas = []
+
+        while i < len(expr) and depth > 0:
+            ch = expr[i]
+            if ch == '(':
+                depth += 1
+            elif ch == ')':
+                depth -= 1
+            elif ch == ',' and depth == 1:
+                commas.append(i)
+            i += 1
+
+        if len(commas) < 2:
+            raise SyntaxError("series/taylor 需要 3-4 个参数: series(expr, var, point, n)，例如 series(sin(x), x, 0, 5)")
+
+        first_comma = commas[0]
+        second_comma = commas[1]
+
+        inner_expr = expr[inner_start:first_comma].strip()
+        var = expr[first_comma + 1:second_comma].strip()
+
+        if len(commas) >= 3:
+            third_comma = commas[2]
+            point_str = expr[second_comma + 1:third_comma].strip()
+            n_str = expr[third_comma + 1:i - 1].strip()
+        else:
+            rest = expr[second_comma + 1:i - 1].strip()
+            point_str = '0'
+            n_str = rest
+
+        preprocessed = cls._preprocess(inner_expr)
+        parsed = cls._parse(preprocessed)
+        var_sym = sympy.Symbol(var)
+        point = sympy.sympify(point_str)
+
+        try:
+            n = int(n_str)
+        except ValueError:
+            n = int(sympy.sympify(n_str))
+
+        result = sympy.series(parsed, var_sym, point, n)
+        return result, 'series'
+
+    @classmethod
     def _has_nested_command(cls, inner_expr: str) -> bool:
         return bool(re.match(cls._CMD_PATTERN, inner_expr.strip()))
 
@@ -204,7 +416,26 @@ class SympyEngine:
 
     @classmethod
     def _dispatch(cls, expr: str) -> tuple[Any, str]:
-        # solve can omit the variable argument, handle it separately
+        dsolve_match = re.match(r'^dsolve\s*\(', expr, re.IGNORECASE)
+        if dsolve_match:
+            return cls._handle_dsolve(expr)
+
+        linsolve_match = re.match(r'^linsolve\s*\(', expr, re.IGNORECASE)
+        if linsolve_match:
+            return cls._handle_linsolve(expr)
+
+        limit_match = re.match(r'^limit\s*\(', expr, re.IGNORECASE)
+        if limit_match:
+            return cls._handle_limit(expr)
+
+        series_match = re.match(r'^(?:series|taylor)\s*\(', expr, re.IGNORECASE)
+        if series_match:
+            return cls._handle_series(expr)
+
+        nsolve_match = re.match(r'^nsolve\s*\(', expr, re.IGNORECASE)
+        if nsolve_match:
+            return cls._handle_nsolve(expr)
+
         solve_match = re.match(r'^solve\s*\(', expr, re.IGNORECASE)
         if solve_match:
             return cls._handle_solve(expr)
@@ -247,5 +478,20 @@ class SympyEngine:
             return parse_expr(
                 expr_str,
                 transformations=cls._TRANSFORMATIONS,
+                evaluate=True,
+            )
+
+    @classmethod
+    def _parse_strict(cls, expr_str: str) -> sympy.Expr:
+        try:
+            return parse_expr(
+                expr_str,
+                transformations=standard_transformations,
+                evaluate=False,
+            )
+        except Exception:
+            return parse_expr(
+                expr_str,
+                transformations=standard_transformations,
                 evaluate=True,
             )
