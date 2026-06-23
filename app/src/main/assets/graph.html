@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/function-plot@1.25.2/dist/function-plot.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { overflow: hidden; touch-action: none; background: transparent; }
+        #plot { width: 100vw; height: 100vh; }
+        .func-plot .tip {
+            pointer-events: none;
+            font-size: 12px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div id="plot"></div>
+    <script>
+        var currentFunctions = [];
+        var currentWidth = window.innerWidth;
+        var currentHeight = window.innerHeight;
+        var currentXMin = -10, currentXMax = 10;
+        var currentYMin = -10, currentYMax = 10;
+
+        function renderFunctions(fnsJson, xMin, xMax, yMin, yMax) {
+            try {
+                currentFunctions = JSON.parse(fnsJson);
+                currentXMin = xMin; currentXMax = xMax;
+                currentYMin = yMin; currentYMax = yMax;
+                currentWidth = window.innerWidth;
+                currentHeight = window.innerHeight;
+
+                var data = [];
+                for (var i = 0; i < currentFunctions.length; i++) {
+                    var fn = currentFunctions[i];
+                    if (fn.hidden) continue;
+
+                    if (fn.fnType === 'parametric' && fn.xExpr && fn.yExpr) {
+                        data.push({
+                            x: fn.xExpr,
+                            y: fn.yExpr,
+                            fnType: 'parametric',
+                            color: fn.color,
+                            graphType: 'polyline',
+                            nSamples: 600,
+                            range: [0, 2 * Math.PI],
+                            title: 'x=' + fn.xExpr + ', y=' + fn.yExpr
+                        });
+                    } else if (fn.fnType === 'polar') {
+                        data.push({
+                            r: fn.expr,
+                            fnType: 'polar',
+                            color: fn.color,
+                            graphType: 'polyline',
+                            nSamples: 600,
+                            range: [0, 4 * Math.PI],
+                            title: 'r=' + fn.expr
+                        });
+                    } else if (fn.fnType === 'implicit') {
+                        data.push({
+                            fn: fn.expr,
+                            fnType: 'implicit',
+                            color: fn.color,
+                            graphType: 'interval',
+                            nSamples: 400,
+                            sampler: 'interval',
+                            title: fn.expr
+                        });
+                    } else {
+                        data.push({
+                            fn: fn.expr,
+                            color: fn.color,
+                            graphType: 'polyline',
+                            nSamples: 400,
+                            title: fn.expr
+                        });
+                    }
+                }
+
+                if (data.length === 0) {
+                    data.push({ fn: '0', color: '#cccccc', graphType: 'polyline', nSamples: 2 });
+                }
+
+                functionPlot({
+                    target: '#plot',
+                    width: currentWidth,
+                    height: currentHeight,
+                    xAxis: {
+                        domain: [xMin, xMax],
+                        label: 'x'
+                    },
+                    yAxis: {
+                        domain: [yMin, yMax],
+                        label: 'y'
+                    },
+                    grid: true,
+                    data: data,
+                    zoom: true,
+                    disableZoom: false,
+                    tip: {
+                        xLine: true,
+                        yLine: true,
+                        renderer: function(x, y, index) {
+                            var entry = currentFunctions[index];
+                            var label = entry ? (entry.fnType === 'parametric' ? 'P' : entry.fnType === 'polar' ? 'r' : 'y') : '';
+                            return label + '(' + x.toFixed(3) + ', ' + y.toFixed(3) + ')';
+                        }
+                    }
+                });
+            } catch(e) {
+                document.getElementById('plot').innerHTML =
+                    '<div style="color:#d32f2f;padding:16px;font-family:sans-serif;">绘图错误: ' + e.message + '</div>';
+            }
+        }
+
+        window.addEventListener('resize', function() {
+            var newW = window.innerWidth;
+            var newH = window.innerHeight;
+            if (newW !== currentWidth || newH !== currentHeight) {
+                currentWidth = newW;
+                currentHeight = newH;
+                renderFunctions(
+                    JSON.stringify(currentFunctions),
+                    currentXMin, currentXMax,
+                    currentYMin, currentYMax
+                );
+            }
+        });
+    </script>
+</body>
+</html>
