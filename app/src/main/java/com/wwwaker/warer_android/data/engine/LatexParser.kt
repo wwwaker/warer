@@ -52,6 +52,10 @@ private fun tokenize(input: String): List<LToken> {
                 tokens.add(LToken.Variable("\\pi"))
             } else if (nameStr == "theta") {
                 tokens.add(LToken.Variable("\\theta"))
+            } else if (nameStr == "i" || nameStr == "j") {
+                tokens.add(LToken.Variable("i"))
+            } else if (nameStr == "e" && (i >= s.length || !s[i].isLetter())) {
+                tokens.add(LToken.Variable("e"))
             } else {
                 tokens.add(LToken.Variable(nameStr))
             }
@@ -281,7 +285,10 @@ private class LParser(private val tokens: List<LToken>) {
                 "\\left["
             }
             is LToken.RSq -> { advance(); "\\right]" }
-            is LToken.Func -> parseFunction(token.value)
+            is LToken.Func -> {
+                advance()
+                parseFunction(token.value)
+            }
             is LToken.LParen -> {
                 advance()
                 val inner = parseExpression()

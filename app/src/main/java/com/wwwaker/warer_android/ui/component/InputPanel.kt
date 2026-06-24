@@ -1,6 +1,5 @@
 package com.wwwaker.warer_android.ui.component
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -19,19 +18,26 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ShowChart
-import androidx.compose.ui.unit.sp
 import com.wwwaker.warer_android.ui.theme.MonospaceTypography
 
 @Composable
 fun InputPanel(
     input: String,
+    cursorPosition: Int,
     previewLatex: String,
     bracketHint: String?,
     onInputChange: (String) -> Unit,
@@ -41,6 +47,25 @@ fun InputPanel(
     onPlot: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
+    var tfValue by remember(input, cursorPosition) {
+        mutableStateOf(
+            TextFieldValue(
+                text = input,
+                selection = TextRange(cursorPosition.coerceIn(0, input.length))
+            )
+        )
+    }
+
+    // Sync from external changes (keyboard button presses via ViewModel)
+    LaunchedEffect(input, cursorPosition) {
+        if (tfValue.text != input || tfValue.selection.start != cursorPosition) {
+            tfValue = TextFieldValue(
+                text = input,
+                selection = TextRange(cursorPosition.coerceIn(0, input.length))
+            )
+        }
+    }
+
     Column(modifier = modifier.fillMaxWidth()) {
         // Expression input field with plot button
         Surface(
@@ -53,8 +78,12 @@ fun InputPanel(
                 modifier = Modifier.padding(start = 12.dp, end = 4.dp)
             ) {
                 BasicTextField(
-                    value = input,
-                    onValueChange = { onInputChange(it) },
+                    value = tfValue,
+                    onValueChange = { newValue ->
+                        tfValue = newValue
+                        onInputChange(newValue.text)
+                        onCursorPositionChange(newValue.selection.start)
+                    },
                     modifier = Modifier
                         .weight(1f)
                         .padding(vertical = 10.dp),

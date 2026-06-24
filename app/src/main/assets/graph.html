@@ -24,14 +24,61 @@
         var currentHeight = window.innerHeight;
         var currentXMin = -10, currentXMax = 10;
         var currentYMin = -10, currentYMax = 10;
+        var currentIsDark = false;
 
-        function renderFunctions(fnsJson, xMin, xMax, yMin, yMax) {
+        function applyTheme(isDark) {
+            currentIsDark = isDark;
+            var axisColor = isDark ? '#999999' : '#333333';
+            var gridColor = isDark ? '#444444' : '#dddddd';
+            var textColor = isDark ? '#cccccc' : '#333333';
+
+            var svg = document.querySelector('.func-plot svg') || document.querySelector('svg');
+            if (!svg) return;
+
+            // Set color on SVG — this cascades to elements using currentColor
+            svg.style.color = textColor;
+            svg.setAttribute('color', textColor);
+
+            // Use d3 to select and modify SVG elements (more robust for SVG namespace)
+            var root = d3.select(svg);
+
+            // All axis domain paths (the axis lines)
+            root.selectAll('.domain')
+                .attr('stroke', axisColor)
+                .style('stroke', axisColor);
+
+            // All tick lines (these are the grid lines + tick marks)
+            root.selectAll('.tick line')
+                .attr('stroke', gridColor)
+                .style('stroke', gridColor)
+                .attr('stroke-opacity', null)
+                .style('stroke-opacity', null);
+
+            // All tick text labels
+            root.selectAll('.tick text')
+                .attr('fill', textColor)
+                .style('fill', textColor)
+                .attr('stroke', 'none');
+
+            // All text elements
+            root.selectAll('text')
+                .attr('fill', textColor)
+                .style('fill', textColor);
+
+            // Origin circle
+            root.selectAll('.origin circle, .origin *')
+                .attr('fill', textColor)
+                .style('fill', textColor);
+        }
+
+        function renderFunctions(fnsJson, xMin, xMax, yMin, yMax, isDark) {
             try {
                 currentFunctions = JSON.parse(fnsJson);
                 currentXMin = xMin; currentXMax = xMax;
                 currentYMin = yMin; currentYMax = yMax;
                 currentWidth = window.innerWidth;
                 currentHeight = window.innerHeight;
+                if (isDark !== undefined) currentIsDark = isDark;
 
                 var data = [];
                 for (var i = 0; i < currentFunctions.length; i++) {
@@ -40,42 +87,27 @@
 
                     if (fn.fnType === 'parametric' && fn.xExpr && fn.yExpr) {
                         data.push({
-                            x: fn.xExpr,
-                            y: fn.yExpr,
-                            fnType: 'parametric',
-                            color: fn.color,
-                            graphType: 'polyline',
-                            nSamples: 600,
-                            range: [0, 2 * Math.PI],
+                            x: fn.xExpr, y: fn.yExpr, fnType: 'parametric',
+                            color: fn.color, graphType: 'polyline',
+                            nSamples: 600, range: [0, 2 * Math.PI],
                             title: 'x=' + fn.xExpr + ', y=' + fn.yExpr
                         });
                     } else if (fn.fnType === 'polar') {
                         data.push({
-                            r: fn.expr,
-                            fnType: 'polar',
-                            color: fn.color,
-                            graphType: 'polyline',
-                            nSamples: 600,
-                            range: [0, 4 * Math.PI],
-                            title: 'r=' + fn.expr
+                            r: fn.expr, fnType: 'polar', color: fn.color,
+                            graphType: 'polyline', nSamples: 600,
+                            range: [0, 4 * Math.PI], title: 'r=' + fn.expr
                         });
                     } else if (fn.fnType === 'implicit') {
                         data.push({
-                            fn: fn.expr,
-                            fnType: 'implicit',
-                            color: fn.color,
-                            graphType: 'interval',
-                            nSamples: 400,
-                            sampler: 'interval',
-                            title: fn.expr
+                            fn: fn.expr, fnType: 'implicit', color: fn.color,
+                            graphType: 'interval', nSamples: 400,
+                            sampler: 'interval', title: fn.expr
                         });
                     } else {
                         data.push({
-                            fn: fn.expr,
-                            color: fn.color,
-                            graphType: 'polyline',
-                            nSamples: 400,
-                            title: fn.expr
+                            fn: fn.expr, color: fn.color,
+                            graphType: 'polyline', nSamples: 400, title: fn.expr
                         });
                     }
                 }
@@ -88,21 +120,14 @@
                     target: '#plot',
                     width: currentWidth,
                     height: currentHeight,
-                    xAxis: {
-                        domain: [xMin, xMax],
-                        label: 'x'
-                    },
-                    yAxis: {
-                        domain: [yMin, yMax],
-                        label: 'y'
-                    },
+                    xAxis: { domain: [xMin, xMax], label: 'x' },
+                    yAxis: { domain: [yMin, yMax], label: 'y' },
                     grid: true,
                     data: data,
                     zoom: true,
                     disableZoom: false,
                     tip: {
-                        xLine: true,
-                        yLine: true,
+                        xLine: true, yLine: true,
                         renderer: function(x, y, index) {
                             var entry = currentFunctions[index];
                             var label = entry ? (entry.fnType === 'parametric' ? 'P' : entry.fnType === 'polar' ? 'r' : 'y') : '';
@@ -110,6 +135,11 @@
                         }
                     }
                 });
+
+                // Apply theme immediately and after delays to catch async rendering
+                applyTheme(currentIsDark);
+                setTimeout(function() { applyTheme(currentIsDark); }, 100);
+                setTimeout(function() { applyTheme(currentIsDark); }, 500);
             } catch(e) {
                 document.getElementById('plot').innerHTML =
                     '<div style="color:#d32f2f;padding:16px;font-family:sans-serif;">绘图错误: ' + e.message + '</div>';
@@ -117,16 +147,11 @@
         }
 
         window.addEventListener('resize', function() {
-            var newW = window.innerWidth;
-            var newH = window.innerHeight;
+            var newW = window.innerWidth, newH = window.innerHeight;
             if (newW !== currentWidth || newH !== currentHeight) {
-                currentWidth = newW;
-                currentHeight = newH;
-                renderFunctions(
-                    JSON.stringify(currentFunctions),
-                    currentXMin, currentXMax,
-                    currentYMin, currentYMax
-                );
+                currentWidth = newW; currentHeight = newH;
+                renderFunctions(JSON.stringify(currentFunctions),
+                    currentXMin, currentXMax, currentYMin, currentYMax, currentIsDark);
             }
         });
     </script>

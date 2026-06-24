@@ -1,13 +1,17 @@
 package com.wwwaker.warer_android.ui.component
 
 import android.annotation.SuppressLint
+import android.graphics.Color
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.material3.MaterialTheme
 
 @Composable
 fun KatexWebView(
@@ -15,19 +19,22 @@ fun KatexWebView(
     displayMode: Boolean = false,
     modifier: Modifier = Modifier
 ) {
+    val isDark = isSystemInDarkTheme()
     val context = androidx.compose.ui.platform.LocalContext.current
+    val textColor = MaterialTheme.colorScheme.onSurface
     val webView = remember {
         WebView(context).apply {
             @SuppressLint("SetJavaScriptEnabled")
             settings.javaScriptEnabled = true
             settings.domStorageEnabled = true
             webViewClient = WebViewClient()
+            setBackgroundColor(Color.TRANSPARENT)
         }
     }
 
-    val html = buildKatexHtml(latex, displayMode)
+    val html = buildKatexHtml(latex, displayMode, textColor.toArgb())
 
-    DisposableEffect(latex, displayMode) {
+    DisposableEffect(latex, displayMode, isDark) {
         webView.loadDataWithBaseURL(null, html, "text/html", "UTF-8", null)
         onDispose { }
     }
@@ -38,12 +45,14 @@ fun KatexWebView(
     )
 }
 
-private fun buildKatexHtml(latex: String, displayMode: Boolean): String {
+private fun buildKatexHtml(latex: String, displayMode: Boolean, textColorArgb: Int): String {
     val display = if (displayMode) "true" else "false"
     val escapedLatex = latex
         .replace("\\", "\\\\")
         .replace("'", "\\'")
         .replace("\n", " ")
+
+    val hexColor = String.format("#%06X", 0xFFFFFF and textColorArgb)
 
     return """
 <!DOCTYPE html>
@@ -63,8 +72,10 @@ private fun buildKatexHtml(latex: String, displayMode: Boolean): String {
             overflow-x: auto;
             overflow-y: hidden;
             background: transparent;
+            color: $hexColor;
         }
-        .katex { font-size: 1.2em; }
+        .katex { font-size: 1.2em; color: $hexColor; }
+        .katex .mathnormal { color: inherit; }
         .error { color: #d32f2f; font-size: 14px; font-family: sans-serif; }
     </style>
 </head>

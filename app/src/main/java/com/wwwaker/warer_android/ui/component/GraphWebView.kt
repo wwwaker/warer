@@ -1,8 +1,10 @@
 package com.wwwaker.warer_android.ui.component
 
 import android.annotation.SuppressLint
+import android.graphics.Color
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
@@ -21,6 +23,7 @@ fun GraphWebView(
     modifier: Modifier = Modifier
 ) {
     val webViewRef = remember { mutableListOf<WebView>() }
+    val isDark = isSystemInDarkTheme()
 
     AndroidView(
         factory = { ctx ->
@@ -28,11 +31,11 @@ fun GraphWebView(
                 settings.javaScriptEnabled = true
                 settings.domStorageEnabled = true
                 settings.allowFileAccess = true
-                setBackgroundColor(android.graphics.Color.TRANSPARENT)
+                setBackgroundColor(Color.TRANSPARENT)
 
                 webViewClient = object : WebViewClient() {
                     override fun onPageFinished(view: WebView, url: String?) {
-                        renderFunctions(view, functions, xMin, xMax, yMin, yMax)
+                        renderFunctions(view, functions, xMin, xMax, yMin, yMax, isDark)
                     }
                 }
 
@@ -43,7 +46,7 @@ fun GraphWebView(
         modifier = modifier,
         update = { view ->
             if (view.progress == 100) {
-                renderFunctions(view, functions, xMin, xMax, yMin, yMax)
+                renderFunctions(view, functions, xMin, xMax, yMin, yMax, isDark)
             }
         }
     )
@@ -59,14 +62,15 @@ private fun renderFunctions(
     view: WebView,
     functions: List<GraphFn>,
     xMin: Double, xMax: Double,
-    yMin: Double, yMax: Double
+    yMin: Double, yMax: Double,
+    isDark: Boolean
 ) {
     val json = buildFunctionsJson(functions)
     val escaped = json
         .replace("\\", "\\\\")
         .replace("'", "\\'")
     view.evaluateJavascript(
-        "renderFunctions('$escaped', $xMin, $xMax, $yMin, $yMax)",
+        "renderFunctions('$escaped', $xMin, $xMax, $yMin, $yMax, $isDark)",
         null
     )
 }

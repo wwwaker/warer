@@ -44,6 +44,7 @@ fun CalculatorScreen(
         ) {
             InputPanel(
                 input = uiState.input,
+                cursorPosition = uiState.cursorPosition,
                 previewLatex = uiState.previewLatex,
                 bracketHint = uiState.bracketHint,
                 onInputChange = { viewModel.onInputChange(it) },
