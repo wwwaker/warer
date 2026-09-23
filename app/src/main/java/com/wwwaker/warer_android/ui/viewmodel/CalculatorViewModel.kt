@@ -334,6 +334,21 @@ class CalculatorViewModel(
         }
     }
 
+    fun updateGraphFnExpression(id: String, expr: String, fnType: String? = null, xExpr: String? = null, yExpr: String? = null) {
+        _uiState.update { state ->
+            state.copy(
+                graphFunctions = state.graphFunctions.map {
+                    if (it.id == id) it.copy(
+                        expr = expr,
+                        fnType = fnType ?: it.fnType,
+                        xExpr = xExpr ?: it.xExpr,
+                        yExpr = yExpr ?: it.yExpr
+                    ) else it
+                }
+            )
+        }
+    }
+
     fun clearGraphFunctions() {
         _uiState.update { it.copy(graphFunctions = emptyList()) }
     }

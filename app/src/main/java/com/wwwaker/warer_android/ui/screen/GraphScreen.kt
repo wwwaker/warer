@@ -20,25 +20,25 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Fullscreen
+import androidx.compose.material.icons.filled.FullscreenExit
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -74,6 +74,17 @@ fun GraphScreen(viewModel: CalculatorViewModel) {
     var yMin by remember { mutableDoubleStateOf(-10.0) }
     var yMax by remember { mutableDoubleStateOf(10.0) }
 
+    var isFullscreen by remember { mutableStateOf(false) }
+
+    // Expression edit dialog state
+    var editingFn by remember { mutableStateOf<GraphFn?>(null) }
+    var editExprText by remember { mutableStateOf("") }
+    var editXExpr by remember { mutableStateOf("") }
+    var editYExpr by remember { mutableStateOf("") }
+
+    // Color picker dialog state
+    var showColorPickerForId by remember { mutableStateOf<String?>(null) }
+
     val modes = listOf(
         "linear" to "y = f(x)",
         "polar" to "r = f(θ)",
@@ -81,127 +92,227 @@ fun GraphScreen(viewModel: CalculatorViewModel) {
         "implicit" to "f(x, y)"
     )
 
-    Column(modifier = Modifier.fillMaxSize()) {
-        // Mode selector
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .horizontalScroll(rememberScrollState())
-                .padding(horizontal = 8.dp, vertical = 4.dp),
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
-            modes.forEach { (mode, label) ->
-                FilterChip(
-                    selected = selectedMode == mode,
-                    onClick = { selectedMode = mode },
-                    label = { Text(label, fontSize = 13.sp) },
-                    colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = MaterialTheme.colorScheme.primaryContainer
-                    )
-                )
-            }
-        }
+    val colorOptions = listOf(
+        "#5b5ef0", "#0ea5a0", "#e5484d", "#f5a623",
+        "#30a46c", "#e84393", "#8b5cf6", "#f472b6"
+    )
 
-        // Input area
-        Surface(
-            modifier = Modifier.fillMaxWidth(),
-            tonalElevation = 1.dp
-        ) {
-            Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
-                when (selectedMode) {
-                    "parametric" -> {
+    // Expression edit dialog
+    val editingFnValue = editingFn
+    if (editingFnValue != null) {
+        val fn = editingFnValue
+        AlertDialog(
+            onDismissRequest = { editingFn = null },
+            title = { Text("编辑函数表达式") },
+            text = {
+                Column {
+                    if (fn.fnType == "parametric") {
+                        OutlinedTextField(
+                            value = editXExpr,
+                            onValueChange = { editXExpr = it },
+                            label = { Text("x(t)") },
+                            singleLine = true,
+                            textStyle = MaterialTheme.typography.bodyLarge.copy(fontFamily = FontFamily.Monospace),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        OutlinedTextField(
+                            value = editYExpr,
+                            onValueChange = { editYExpr = it },
+                            label = { Text("y(t)") },
+                            singleLine = true,
+                            textStyle = MaterialTheme.typography.bodyLarge.copy(fontFamily = FontFamily.Monospace),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    } else {
+                        OutlinedTextField(
+                            value = editExprText,
+                            onValueChange = { editExprText = it },
+                            label = { Text("表达式") },
+                            singleLine = true,
+                            textStyle = MaterialTheme.typography.bodyLarge.copy(fontFamily = FontFamily.Monospace),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    if (editExprText.isNotBlank() || fn.fnType == "parametric") {
+                        viewModel.updateGraphFnExpression(
+                            id = fn.id,
+                            expr = if (fn.fnType == "parametric") "t($editXExpr, $editYExpr)" else editExprText,
+                            xExpr = if (fn.fnType == "parametric") editXExpr else null,
+                            yExpr = if (fn.fnType == "parametric") editYExpr else null
+                        )
+                    }
+                    editingFn = null
+                }) { Text("确定") }
+            },
+            dismissButton = { TextButton(onClick = { editingFn = null }) { Text("取消") } }
+        )
+    }
+
+    // Color picker dialog
+    val colorPickerFnId = showColorPickerForId
+    if (colorPickerFnId != null) {
+        AlertDialog(
+            onDismissRequest = { showColorPickerForId = null },
+            confirmButton = {
+                TextButton(onClick = { showColorPickerForId = null }) { Text("关闭") }
+            },
+            title = { Text("选择颜色") },
+            text = {
+                Column {
+                    colorOptions.chunked(4).forEach { row ->
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            horizontalArrangement = Arrangement.SpaceEvenly
                         ) {
+                            row.forEach { color ->
+                                Box(
+                                    modifier = Modifier
+                                        .size(40.dp)
+                                        .clip(CircleShape)
+                                        .background(parseColorHex(color))
+                                        .clickable {
+                                            viewModel.updateGraphFnColor(colorPickerFnId, color)
+                                            showColorPickerForId = null
+                                        }
+                                        .border(2.dp, MaterialTheme.colorScheme.outline, CircleShape)
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                }
+            }
+        )
+    }
+
+    Column(modifier = Modifier.fillMaxSize()) {
+        if (!isFullscreen) {
+            // Mode selector
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState())
+                    .padding(horizontal = 8.dp, vertical = 4.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                modes.forEach { (mode, label) ->
+                    FilterChip(
+                        selected = selectedMode == mode,
+                        onClick = { selectedMode = mode },
+                        label = { Text(label, fontSize = 13.sp) },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer
+                        )
+                    )
+                }
+            }
+
+            // Input area
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                tonalElevation = 1.dp
+            ) {
+                Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
+                    when (selectedMode) {
+                        "parametric" -> {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                OutlinedTextField(
+                                    value = xExprInput,
+                                    onValueChange = { xExprInput = it },
+                                    label = { Text("x(t)") },
+                                    singleLine = true,
+                                    textStyle = MaterialTheme.typography.bodyLarge.copy(
+                                        fontFamily = FontFamily.Monospace
+                                    ),
+                                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                                    modifier = Modifier.weight(1f)
+                                )
+                                OutlinedTextField(
+                                    value = yExprInput,
+                                    onValueChange = { yExprInput = it },
+                                    label = { Text("y(t)") },
+                                    singleLine = true,
+                                    textStyle = MaterialTheme.typography.bodyLarge.copy(
+                                        fontFamily = FontFamily.Monospace
+                                    ),
+                                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
+                        }
+                        else -> {
                             OutlinedTextField(
-                                value = xExprInput,
-                                onValueChange = { xExprInput = it },
-                                label = { Text("x(t)") },
-                                singleLine = true,
-                                textStyle = MaterialTheme.typography.bodyLarge.copy(
-                                    fontFamily = FontFamily.Monospace
-                                ),
-                                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-                                modifier = Modifier.weight(1f)
-                            )
-                            OutlinedTextField(
-                                value = yExprInput,
-                                onValueChange = { yExprInput = it },
-                                label = { Text("y(t)") },
+                                value = exprInput,
+                                onValueChange = { exprInput = it },
+                                label = {
+                                    Text(
+                                        when (selectedMode) {
+                                            "polar" -> "r = f(θ)"
+                                            "implicit" -> "f(x, y) = 0"
+                                            else -> "y = f(x)"
+                                        }
+                                    )
+                                },
                                 singleLine = true,
                                 textStyle = MaterialTheme.typography.bodyLarge.copy(
                                     fontFamily = FontFamily.Monospace
                                 ),
                                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier.fillMaxWidth()
                             )
                         }
                     }
-                    else -> {
-                        OutlinedTextField(
-                            value = exprInput,
-                            onValueChange = { exprInput = it },
-                            label = {
-                                Text(
-                                    when (selectedMode) {
-                                        "polar" -> "r = f(θ)"
-                                        "implicit" -> "f(x, y) = 0"
-                                        else -> "y = f(x)"
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Button(
+                        onClick = {
+                            when (selectedMode) {
+                                "parametric" -> {
+                                    if (xExprInput.isNotBlank() && yExprInput.isNotBlank()) {
+                                        val detection = GraphDetector.detect("t($xExprInput, $yExprInput)")
+                                        viewModel.addGraphFunction(
+                                            expr = detection.expr,
+                                            fnType = "parametric",
+                                            xExpr = xExprInput,
+                                            yExpr = yExprInput
+                                        )
+                                        xExprInput = ""
+                                        yExprInput = ""
                                     }
-                                )
-                            },
-                            singleLine = true,
-                            textStyle = MaterialTheme.typography.bodyLarge.copy(
-                                fontFamily = FontFamily.Monospace
-                            ),
-                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                            modifier = Modifier.fillMaxWidth()
-                        )
+                                }
+                                else -> {
+                                    if (exprInput.isNotBlank()) {
+                                        val detection = GraphDetector.detect(exprInput)
+                                        viewModel.addGraphFunction(
+                                            expr = detection.expr,
+                                            fnType = detection.type,
+                                            xExpr = detection.xExpr,
+                                            yExpr = detection.yExpr
+                                        )
+                                        exprInput = ""
+                                    }
+                                }
+                            }
+                        },
+                        enabled = when (selectedMode) {
+                            "parametric" -> xExprInput.isNotBlank() && yExprInput.isNotBlank()
+                            else -> exprInput.isNotBlank()
+                        },
+                        modifier = Modifier.align(Alignment.End)
+                    ) {
+                        Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("添加")
                     }
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Button(
-                    onClick = {
-                        when (selectedMode) {
-                            "parametric" -> {
-                                if (xExprInput.isNotBlank() && yExprInput.isNotBlank()) {
-                                    val detection = GraphDetector.detect("t($xExprInput, $yExprInput)")
-                                    viewModel.addGraphFunction(
-                                        expr = detection.expr,
-                                        fnType = "parametric",
-                                        xExpr = xExprInput,
-                                        yExpr = yExprInput
-                                    )
-                                    xExprInput = ""
-                                    yExprInput = ""
-                                }
-                            }
-                            else -> {
-                                if (exprInput.isNotBlank()) {
-                                    val detection = GraphDetector.detect(exprInput)
-                                    viewModel.addGraphFunction(
-                                        expr = detection.expr,
-                                        fnType = detection.type,
-                                        xExpr = detection.xExpr,
-                                        yExpr = detection.yExpr
-                                    )
-                                    exprInput = ""
-                                }
-                            }
-                        }
-                    },
-                    enabled = when (selectedMode) {
-                        "parametric" -> xExprInput.isNotBlank() && yExprInput.isNotBlank()
-                        else -> exprInput.isNotBlank()
-                    },
-                    modifier = Modifier.align(Alignment.End)
-                ) {
-                    Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text("添加")
                 }
             }
         }
@@ -215,69 +326,71 @@ fun GraphScreen(viewModel: CalculatorViewModel) {
                 modifier = Modifier.fillMaxSize()
             )
 
-            // Viewport controls overlay
+            // Fullscreen toggle (top-right corner)
+            IconButton(
+                onClick = { isFullscreen = !isFullscreen },
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(4.dp)
+                    .size(36.dp)
+                    .clip(RoundedCornerShape(6.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.85f))
+            ) {
+                Icon(
+                    if (isFullscreen) Icons.Default.FullscreenExit else Icons.Default.Fullscreen,
+                    contentDescription = if (isFullscreen) "退出全屏" else "全屏",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+
+            // Viewport controls (bottom-right, only reset button)
             Column(
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .padding(8.dp),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                ViewportButton("+x") {
-                    val span = xMax - xMin
-                    xMin += span * 0.1; xMax += span * 0.1
-                }
-                ViewportButton("-x") {
-                    val span = xMax - xMin
-                    xMin -= span * 0.1; xMax -= span * 0.1
-                }
-                ViewportButton("+y") {
-                    val span = yMax - yMin
-                    yMin += span * 0.1; yMax += span * 0.1
-                }
-                ViewportButton("-y") {
-                    val span = yMax - yMin
-                    yMin -= span * 0.1; yMax -= span * 0.1
-                }
-                ViewportButton("缩放+") {
-                    val cx = (xMin + xMax) / 2; val cy = (yMin + yMax) / 2
-                    val xs = (xMax - xMin) * 0.5; val ys = (yMax - yMin) * 0.5
-                    xMin = cx - xs; xMax = cx + xs
-                    yMin = cy - ys; yMax = cy + ys
-                }
-                ViewportButton("缩放-") {
-                    val cx = (xMin + xMax) / 2; val cy = (yMin + yMax) / 2
-                    val xs = (xMax - xMin) * 1.5; val ys = (yMax - yMin) * 1.5
-                    xMin = cx - xs; xMax = cx + xs
-                    yMin = cy - ys; yMax = cy + ys
-                }
-                ViewportButton("重置") {
+                GraphViewportButton("重置") {
                     xMin = -10.0; xMax = 10.0
                     yMin = -10.0; yMax = 10.0
                 }
             }
         }
 
-        // Function list
-        if (uiState.graphFunctions.isNotEmpty()) {
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                tonalElevation = 2.dp
-            ) {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(140.dp)
-                        .padding(vertical = 4.dp)
+        if (!isFullscreen) {
+            // Function list
+            if (uiState.graphFunctions.isNotEmpty()) {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    tonalElevation = 2.dp
                 ) {
-                    items(
-                        items = uiState.graphFunctions,
-                        key = { it.id }
-                    ) { fn ->
-                        GraphFnRow(
-                            fn = fn,
-                            onToggleVisibility = { viewModel.toggleGraphFnVisibility(fn.id) },
-                            onRemove = { viewModel.removeGraphFunction(fn.id) }
-                        )
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(160.dp)
+                            .padding(vertical = 4.dp)
+                    ) {
+                        items(
+                            items = uiState.graphFunctions,
+                            key = { it.id }
+                        ) { fn ->
+                            GraphFnRow(
+                                fn = fn,
+                                onToggleVisibility = { viewModel.toggleGraphFnVisibility(fn.id) },
+                                onRemove = { viewModel.removeGraphFunction(fn.id) },
+                                onEditExpression = {
+                                    editingFn = fn
+                                    if (fn.fnType == "parametric") {
+                                        editXExpr = fn.xExpr
+                                        editYExpr = fn.yExpr
+                                    } else {
+                                        editExprText = fn.expr
+                                    }
+                                },
+                                onEditColor = { showColorPickerForId = fn.id }
+                            )
+                        }
                     }
                 }
             }
@@ -286,7 +399,7 @@ fun GraphScreen(viewModel: CalculatorViewModel) {
 }
 
 @Composable
-private fun ViewportButton(label: String, onClick: () -> Unit) {
+private fun GraphViewportButton(label: String, onClick: () -> Unit) {
     Surface(
         modifier = Modifier.size(36.dp),
         shape = RoundedCornerShape(6.dp),
@@ -310,7 +423,9 @@ private fun ViewportButton(label: String, onClick: () -> Unit) {
 private fun GraphFnRow(
     fn: GraphFn,
     onToggleVisibility: () -> Unit,
-    onRemove: () -> Unit
+    onRemove: () -> Unit,
+    onEditExpression: () -> Unit,
+    onEditColor: () -> Unit
 ) {
     Row(
         modifier = Modifier
@@ -318,23 +433,26 @@ private fun GraphFnRow(
             .padding(horizontal = 12.dp, vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Color indicator
+        // Color indicator (clickable)
         Box(
             modifier = Modifier
-                .size(12.dp)
+                .size(14.dp)
                 .clip(CircleShape)
-                .background(parseColor(fn.color))
+                .background(parseColorHex(fn.color))
                 .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape)
+                .clickable { onEditColor() }
         )
 
         Spacer(modifier = Modifier.width(8.dp))
 
-        // Expression label
+        // Expression label (clickable to edit)
         Text(
             text = buildFnLabel(fn),
             style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
             maxLines = 1,
-            modifier = Modifier.weight(1f)
+            modifier = Modifier
+                .weight(1f)
+                .clickable { onEditExpression() }
         )
 
         // Visibility toggle
@@ -368,7 +486,7 @@ private fun buildFnLabel(fn: GraphFn): String {
     }
 }
 
-private fun parseColor(hex: String): Color {
+private fun parseColorHex(hex: String): Color {
     return try {
         Color(android.graphics.Color.parseColor(hex))
     } catch (_: Exception) {
