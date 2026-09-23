@@ -1,6 +1,11 @@
-# Warer Backend
+> [!WARNING]
+> **本项目已停止维护（2026-09）**
+>
+> 代码仅作存档参考，不再更新。
 
-> 简洁小巧、上手容易的科学计算器后端服务
+---
+
+# Warer Backend
 
 Warer 后端采用 Python + FastAPI + SymPy 技术栈，提供符号计算能力，支持求导、积分、解方程等高级数学运算。
 
@@ -8,11 +13,11 @@ Warer 后端采用 Python + FastAPI + SymPy 技术栈，提供符号计算能力
 
 ## 🌐 项目导航
 
-| 项目            | 仓库地址                                                      | 状态     |
-| :------------ | :-------------------------------------------------------- | :----- |
-| **主仓库**       | [warer](https://github.com/wwwaker/warer)                 | ✅ 活跃   |
-| **Web 前端**    | [warer-web](https://github.com/wwwaker/warer-web)         | ✅ 活跃   |
-| **Android 端** | [warer-android](https://github.com/wwwaker/warer-android) | 🔄 待实现 |
+| 项目            | 仓库地址                                                           |
+| :------------ | :-------------------------------------------------------- |
+| **主仓库**       | [warer](https://github.com/wwwaker/warer)                    |
+| **Web 前端**    | [warer-web](https://github.com/wwwaker/warer-web)             |
+| **Android 端** | [warer-android](https://github.com/wwwaker/warer-android)   |
 
 ***
 
