@@ -1,20 +1,27 @@
-__pycache__/
-*.py[cod]
-*$py.class
-*.egg-info/
-dist/
-build/
-.eggs/
-*.egg
+# ===== 归档：仅本地保留，不纳入版本控制 =====
+/web/
+/android_orig/
 
-.venv/
-venv/
-env/
-
-.env
-*.pem
-
+# ===== 本地 / IDE 配置 =====
+.claude/
 .idea/
 .vscode/
-*.sw?
+*.iml
+
+# ===== Python =====
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+
+# ===== Android / Gradle =====
+.gradle/
+build/
+local.properties
+*.apk
+*.aab
+
+# ===== 通用 =====
 .DS_Store
+*.log
