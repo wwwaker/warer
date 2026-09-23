@@ -1,6 +1,11 @@
-# Warer Android
+> [!WARNING]
+> **本项目已停止维护（2026-09）**
+>
+> 代码仅作存档参考，不再更新。
 
-> 精准、锋利、一触即发的科学计算器 Android 客户端
+---
+
+# Warer Android
 
 Warer Android 端采用 **Kotlin + Jetpack Compose** 构建，与 Web 端共享"本地数值 + 云端符号"混合计算架构，支持实时 LaTeX 公式预览和函数绘图。
 
@@ -8,11 +13,11 @@ Warer Android 端采用 **Kotlin + Jetpack Compose** 构建，与 Web 端共享"
 
 ## 🌐 项目导航
 
-| 项目 | 仓库地址 | 状态 |
-| :--- | :--- | :--- |
-| **主仓库** | [warer](https://github.com/wwwaker/warer) | ✅ 活跃 |
-| **Web 前端** | [warer-web](https://github.com/wwwaker/warer-web) | ✅ 活跃 |
-| **Android 端** | [warer-android](https://github.com/wwwaker/warer-android) | ✅ 活跃 |
+| 项目            | 仓库地址                                                           |
+| :------------ | :-------------------------------------------------------- |
+| **主仓库**       | [warer](https://github.com/wwwaker/warer)                    |
+| **Web 前端**    | [warer-web](https://github.com/wwwaker/warer-web)             |
+| **Android 端** | [warer-android](https://github.com/wwwaker/warer-android)   |
 
 ---
 
