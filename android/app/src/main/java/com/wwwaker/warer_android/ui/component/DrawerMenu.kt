@@ -35,7 +35,9 @@ import kotlinx.coroutines.launch
 @Composable
 fun DrawerMenu(
     settingsManager: SettingsManager,
-    onClose: () -> Unit = {}
+    onClose: () -> Unit = {},
+    onOpenFormulaDemo: () -> Unit = {},
+    onOpenFormulaEditor: () -> Unit = {}
 ) {
     val scope = rememberCoroutineScope()
     val scrollState = rememberScrollState()
@@ -73,6 +75,33 @@ fun DrawerMenu(
         )
 
         Spacer(modifier = Modifier.height(24.dp))
+        HorizontalDivider()
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // 开发工具
+        Text("开发工具", style = MaterialTheme.typography.titleMedium)
+        Spacer(modifier = Modifier.height(8.dp))
+        OutlinedButton(
+            onClick = {
+                onClose()
+                onOpenFormulaDemo()
+            },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("原生公式排版演示")
+        }
+        Spacer(modifier = Modifier.height(6.dp))
+        OutlinedButton(
+            onClick = {
+                onClose()
+                onOpenFormulaEditor()
+            },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("公式编辑器（实验）")
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
         HorizontalDivider()
         Spacer(modifier = Modifier.height(16.dp))
 

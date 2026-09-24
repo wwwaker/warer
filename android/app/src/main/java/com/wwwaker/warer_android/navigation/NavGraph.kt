@@ -30,6 +30,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.wwwaker.warer_android.ui.component.FunctionPanel
+import com.wwwaker.warer_android.ui.formula.FormulaDemoScreen
+import com.wwwaker.warer_android.ui.formula.FormulaEditorScreen
 import com.wwwaker.warer_android.ui.screen.CalculatorScreen
 import com.wwwaker.warer_android.ui.screen.GraphScreen
 import com.wwwaker.warer_android.ui.screen.HistoryScreen
@@ -136,6 +138,14 @@ fun WarerNavGraph(
                     historyViewModel = historyViewModel,
                     navController = navController
                 )
+            }
+            // 开发用：原生公式排版演示（无底部 Tab，从侧栏菜单进入）
+            composable(Screen.FORMULA_DEMO) {
+                FormulaDemoScreen()
+            }
+            // 公式编辑器实验页（阶段 1 交付）
+            composable(Screen.FORMULA_EDITOR) {
+                FormulaEditorScreen()
             }
         }
     }

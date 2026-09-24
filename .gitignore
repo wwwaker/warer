@@ -20,6 +20,9 @@ venv/
 # ===== Android / Gradle =====
 .gradle/
 build/
+# 部分 IDE / Kotlin 插件会把编译输出写到 bin/ 而不是 build/，
+# 内容是 main/** 下源码的完整副本 —— 看着像源码，极易被 git add -A 误入库
+bin/
 local.properties
 *.apk
 *.aab

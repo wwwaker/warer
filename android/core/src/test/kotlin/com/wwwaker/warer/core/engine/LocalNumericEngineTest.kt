@@ -32,6 +32,21 @@ class LocalNumericEngineTest {
         assertEquals("0", r.plainText)
     }
 
+    /**
+     * 回归测试：指数必须能算出来。
+     *
+     * 真机暴露的问题：预处理里有一句从 Web 端（mathjs）移植过来的
+     * `.replace("^", "**")`，而 **mXparser 的幂运算符是 `^`** ——
+     * 换成 `**` 直接解析失败，于是"任何带指数的表达式都算不出来"。
+     * 输入与命令预览看起来都完全正常，只有结果是错的。
+     */
+    @Test
+    fun `powers are computed with the caret operator`() {
+        assertEquals(8.0, LocalNumericEngine.compute("2^3")!!.numericValue!!, 1e-9)
+        assertEquals(32.0, LocalNumericEngine.compute("2^(5)")!!.numericValue!!, 1e-9)
+        assertEquals(25.0, LocalNumericEngine.compute("3^2+4^2")!!.numericValue!!, 1e-9)
+    }
+
     @Test
     fun `expression with unknown symbol cannot be evaluated locally`() {
         assertNull(LocalNumericEngine.compute("x+1"))

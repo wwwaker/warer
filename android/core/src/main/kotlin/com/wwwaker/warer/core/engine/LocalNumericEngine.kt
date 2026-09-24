@@ -29,9 +29,13 @@ object LocalNumericEngine {
      */
     fun compute(input: String): NumericResult? {
         return try {
+            // 注意：**不要**把 `^` 换成 `**`。
+            // mXparser 的幂运算符就是 `^`，换成 `**` 会让它解析失败 ——
+            // 表现为"任何带指数的表达式都算不出来"（真机上就是这么错的）。
+            // 这段替换是从 Web 端（mathjs）移植时带过来的遗留，mathjs 两种写法都支持，
+            // 但 mXparser 只认 `^`。
             val preprocessed = input
                 .replace(Regex("""^[yY]\s*=\s*"""), "")
-                .replace("^", "**")
                 .replace(Regex("""\bln\b""", RegexOption.IGNORE_CASE), "log")
                 .replace("π", "pi")
 
