@@ -51,6 +51,9 @@ android {
 }
 
 dependencies {
+    // 本项目纯 Kotlin 核心模块（无 Android 依赖）：计算引擎 / 公式编辑器 / 绘图算法
+    implementation(project(":core"))
+
     // Core
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
@@ -89,8 +92,7 @@ dependencies {
     implementation(libs.room.ktx)
     kapt(libs.room.compiler)
 
-    // Local compute engine
-    implementation(libs.mxparser)
+    // 本地计算引擎（mXparser）已下沉为 :core 的实现细节，app 不再直接依赖
 
     // Testing
     testImplementation(libs.junit)

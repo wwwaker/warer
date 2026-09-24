@@ -24,3 +24,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "Warer-Android"
 include(":app")
+include(":core")

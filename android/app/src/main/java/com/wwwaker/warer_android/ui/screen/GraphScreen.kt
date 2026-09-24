@@ -55,7 +55,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.wwwaker.warer_android.data.engine.GraphDetector
+import com.wwwaker.warer.core.graph.GraphDetector
 import com.wwwaker.warer_android.ui.component.GraphWebView
 import com.wwwaker.warer_android.ui.viewmodel.CalculatorViewModel
 import com.wwwaker.warer_android.ui.viewmodel.GraphFn

@@ -16,7 +16,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import com.wwwaker.warer_android.data.engine.GraphDetector
+import com.wwwaker.warer.core.graph.GraphDetector
 import com.wwwaker.warer_android.ui.component.InputPanel
 import com.wwwaker.warer_android.ui.component.ResultPanel
 import com.wwwaker.warer_android.ui.component.ScientificKeyboard

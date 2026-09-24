@@ -1,4 +1,4 @@
-package com.wwwaker.warer_android.data.engine
+package com.wwwaker.warer.core.graph
 
 data class DetectionResult(
     val type: String, // linear, polar, parametric, implicit
