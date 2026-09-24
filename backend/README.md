@@ -1,88 +1,104 @@
-> [!WARNING]
-> **本项目已停止维护（2026-09）**
->
-> 代码仅作存档参考，不再更新。
+# Warer Backend
+
+Warer 的符号计算后端，Python + FastAPI + SymPy。为客户端提供本地引擎无法胜任的重运算（积分、微分方程、级数等）。
 
 ---
 
-# Warer Backend
+## 功能
 
-Warer 后端采用 Python + FastAPI + SymPy 技术栈，提供符号计算能力，支持求导、积分、解方程等高级数学运算。
+| 命令 | 说明 |
+| :--- | :--- |
+| `diff` / `derivative` | 求导（单变量、多变量） |
+| `integrate` / `int` | 不定积分与定积分 |
+| `solve` | 解方程（多项式及部分超越方程） |
+| `nsolve` | 数值求根，适用于无解析解的方程 |
+| `dsolve` | 微分方程 |
+| `linsolve` | 线性方程组 |
+| `limit` | 极限 |
+| `series` / `taylor` | 级数展开与泰勒展开 |
+| `simplify` | 代数化简 |
+| 矩阵运算 | `det` · `inv` / `inverse` · `transpose` · `rank` · `eigenvals` · `eigenvects` |
+| 虚数单位 | `i` / `j` |
 
-***
+其他特性：
 
-## 🌐 项目导航
+- 单一入口 `POST /v1/compute`，**30 秒超时保护**
+- 嵌套命令检测，支持复合表达式
+- 数值结果智能舍入：识别整数与常见分数，避免出现 `0.3333333333333333`
+- 错误返回带类型与位置信息
 
-| 项目            | 仓库地址                                                           |
-| :------------ | :-------------------------------------------------------- |
-| **主仓库**       | [warer](https://github.com/wwwaker/warer)                    |
-| **Web 前端**    | [warer-web](https://github.com/wwwaker/warer-web)             |
-| **Android 端** | [warer-android](https://github.com/wwwaker/warer-android)   |
+---
 
-***
+## 启动步骤
 
-## 🚀 快速开始
+### 环境要求
 
-### 1. 创建虚拟环境并安装依赖
+- Python 3.10+
+
+### 安装与运行
 
 ```bash
+cd backend
+
 python -m venv .venv
-# Windows
-.venv\Scripts\activate
-# macOS / Linux
-source .venv/bin/activate
+source .venv/bin/activate                # Windows: .venv\Scripts\activate
 
 pip install -r requirements.txt
-```
-
-### 2. 启动开发服务器
-
-```bash
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-### 3. 验证
+也可以用自带脚本启动：
 
-浏览器访问 `http://localhost:8000/docs` 查看 API 文档（Swagger UI）。
-
-***
-
-## 🔧 技术栈
-
-- Python 3.10+
-- FastAPI
-- SymPy（符号计算引擎）
-- Uvicorn（ASGI 服务器）
-
-***
-
-## 📁 项目结构
-
-```
-app/
-├── api/
-│   └── routes.py      # API 路由定义
-├── core/
-│   └── engine.py      # 符号计算引擎封装
-├── models/
-│   └── schemas.py     # 请求/响应数据模型
-└── main.py            # 应用入口
+```bash
+./start.sh          # Linux / macOS
+start.bat           # Windows
 ```
 
-***
+### 验证
 
-## 🔌 API 接口
+浏览器打开 `http://localhost:8000/docs` 查看 Swagger UI。
 
-### POST /v1/compute
+```bash
+curl http://localhost:8000/health
+```
 
-执行数学表达式计算
+### 运行测试
 
-**请求体：**
+```bash
+python tests/test_engine.py
+```
+
+详见 [tests/README.md](tests/README.md)。
+
+---
+
+## 项目结构
+
+```
+backend/
+├── app/
+│   ├── api/routes.py        API 路由
+│   ├── core/engine.py       符号计算引擎封装（分派与结果格式化）
+│   ├── models/schemas.py     请求 / 响应模型
+│   └── main.py               应用入口
+├── tests/                    引擎回归测试
+├── requirements.txt
+├── start.sh / start.bat
+└── README.md
+```
+
+---
+
+## API
+
+### `POST /v1/compute`
+
+请求：
 
 ```json
 {
   "metadata": {
-    "client_id": "web_client",
+    "client_id": "android",
     "timestamp": 1714982400,
     "session_id": "string"
   },
@@ -98,7 +114,7 @@ app/
 }
 ```
 
-**响应体：**
+响应：
 
 ```json
 {
@@ -115,44 +131,8 @@ app/
 }
 ```
 
-***
+出错时 `error` 不为 `null`，其中包含错误类型与位置信息。
 
-## ✨ 已实现功能
+### `GET /health`
 
-### 数学运算
-
-- ✅ **求导** (`diff`) — 支持单变量和多变量求导
-- ✅ **积分** (`integrate`) — 支持不定积分和定积分
-- ✅ **解方程** (`solve`) — 支持多项式和部分超越方程
-- ✅ **化简** (`simplify`) — 代数表达式化简
-- ✅ **虚数计算** — 支持 `i` / `j` 作为虚数单位
-- ✅ **`nsolve`** — 数值求根（适用于无解析解的方程）
-- ✅ **矩阵运算** — 矩阵创建、运算和求逆
-- ✅ **微分方程** — `dsolve` 求解
-- ✅ **方程组求解** — `linsolve` / `nonlinsolve`
-
-### 系统特性
-
-- ✅ **嵌套命令检测** — 支持复合表达式计算，30s 超时保护
-- ✅ **浮点精度优化** — 智能舍入，常见分数/整数识别
-- ✅ **错误处理** — 详细的错误类型和位置信息
-
-***
-
-## 📝 待实现功能
-
-- [ ] **图像分析** — 零点、极值点计算（用于前端标注）
-- [ ] **缓存策略** — Redis 缓存重复计算结果
-
-***
-
-## 📜 设计理念
-
-**精准、锋利、一触即发**
-
-- **离线优先**：前端优先使用本地引擎，复杂计算才调用云端
-- **统一协议**：与 Web、Android 端共享统一的数据协议
-- **轻量高效**：专注核心计算能力，避免功能冗余
-
-***
-
+健康检查。

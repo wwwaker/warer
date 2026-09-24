@@ -1,151 +1,124 @@
-> [!WARNING]
-> **本项目已停止维护（2026-09）**
->
-> 代码仅作存档参考，不再更新。
-
----
-
 # Warer Android
 
-Warer Android 端采用 **Kotlin + Jetpack Compose** 构建，与 Web 端共享"本地数值 + 云端符号"混合计算架构，支持实时 LaTeX 公式预览和函数绘图。
+Android 科学计算器，Kotlin + Jetpack Compose 实现。
 
 ---
 
-## 🌐 项目导航
+## 功能
 
-| 项目            | 仓库地址                                                           |
-| :------------ | :-------------------------------------------------------- |
-| **主仓库**       | [warer](https://github.com/wwwaker/warer)                    |
-| **Web 前端**    | [warer-web](https://github.com/wwwaker/warer-web)             |
-| **Android 端** | [warer-android](https://github.com/wwwaker/warer-android)   |
+### 二维公式编辑器（实验）
 
----
+所见即所得的结构化输入，不是"在一行文本里加括号"：
 
-## ✨ 已实现功能
+- 支持分式、根式（含 n 次方根）、上下标、括号 / 绝对值、积分、求和、连乘、极限
+- 撤销 / 重做、**点击定位**（点公式的哪个位置，光标就到哪个位置）
+- 模板键插入后光标自动进入第一个空槽位，"跳到空位"可依次填写
+- 空槽位显示灰色占位框；顶部实时显示**"将交给计算引擎的命令"**，输入什么一目了然
 
-### 🧮 计算器核心
-- **混合计算** — 基本运算本地执行（mXparser），符号计算（微分、积分、求解等）自动切换云端
-- **实时 LaTeX 预览** — 输入即见公式预览，使用递归下降解析器，支持分数、幂次、函数参数、矩阵等
-- **智能括号补全** — 自动检测括号不匹配并提供一键修复
-- **函数模板面板** — 内置求导、积分、求解、矩阵等常用模板
-- **本地降级** — 云端不可用时自动降级本地计算
+入口：侧边菜单 → 开发工具 → **公式编辑器（实验）**
 
-### 📈 函数绘图
-- **四种函数模式**：
-  - 线性函数 `y = f(x)`
-  - 极坐标函数 `r = f(θ)`
-  - 参数方程 `x(t), y(t)`
-  - 隐函数 `f(x, y) = 0`
-- **视图控制**：平移、缩放、重置
-- **多函数管理**：同时绘制多条函数，支持显示/隐藏切换
-- **实验性功能**：Y 轴范围可调，基础交互控制
+### 混合计算
 
-### 📋 历史记录
-- **分类浏览**：按计算/绘图类型筛选
-- **关键词搜索**：支持全文搜索历史记录
-- **日期分组**：自动按今天/昨天/本周/日期分组
-- **历史回溯**：点击计算记录恢复输入，点击绘图记录跳转绘图页
+| 类型 | 执行位置 |
+| :--- | :--- |
+| 四则、三角函数、对数、幂、分数 | 本地（mXparser，完全离线） |
+| 求导、积分、解方程、极限、级数、矩阵 | 云端（SymPy） |
+
+云端不可用时降级本地计算，并明确标注当前模式，不会静默失败。
+
+### 函数绘图
+
+- 四种模式：`y = f(x)`、极坐标 `r = f(θ)`、参数方程 `x(t), y(t)`、隐函数 `f(x, y) = 0`
+- 平移 / 缩放 / 重置，多函数同时绘制并可单独显示或隐藏
+
+### 历史记录
+
+- 按计算 / 绘图分类筛选，关键词搜索，按日期（今天 / 昨天 / 本周）分组
+- 点击计算记录可恢复输入，点击绘图记录跳转到绘图页
 
 ---
 
-## 🚀 快速开始
+## 启动步骤
+
+### 环境要求
+
+| 项 | 要求 |
+| :--- | :--- |
+| JDK | **21，必须是完整 JDK**（JRE 不含 `jlink`，打包会失败） |
+| Android SDK | compileSdk 36 |
+| 最低运行版本 | Android 8.0（minSdk 26） |
 
 ### 方式一：Android Studio
 
-打开 `android/` 目录，同步 Gradle，连接设备后点击运行。
+打开 `android/` 目录 → 同步 Gradle → 连接设备 → 点击运行。
 
 ### 方式二：命令行
 
 ```bash
-# 构建 debug APK
-./gradlew assembleDebug
+cd android
 
-# 安装到连接的设备
-./gradlew installDebug
+./gradlew :app:assembleDebug      # 构建 debug APK
+./gradlew :app:installDebug       # 构建并安装到已连接设备
 
-# 启动应用
 adb shell am start -n com.wwwaker.warer_android/.MainActivity
 ```
 
----
+> Windows 的 cmd / PowerShell 下把 `./gradlew` 写成 `.\gradlew.bat`。
 
-## 🔧 技术栈
+### 运行单元测试
 
-| 模块 | 技术选型 |
-| :--- | :--- |
-| UI | Jetpack Compose + Material3 |
-| 架构 | MVVM (ViewModel + StateFlow) |
-| 网络 | Retrofit + OkHttp + kotlinx-serialization |
-| 本地存储 | Room (SQLite) + DataStore Preferences |
-| 本地计算 | mXparser |
-| 公式渲染 | WebView + KaTeX (CDN) |
-| 函数绘图 | WebView + function-plot.js |
-| 导航 | Navigation Compose |
-
-### 环境要求
-
-| 参数 | 值 |
-| :--- | :--- |
-| minSdk | 26 (Android 8.0) |
-| compileSdk / targetSdk | 36 |
-| Kotlin | 2.2.10 |
-| AGP | 9.1.1 |
-| Compose BOM | 2026.02.01 |
-
----
-
-## 📁 项目结构
-
+```bash
+cd android
+./gradlew :core:test
 ```
-com.wwwaker.warer_android/
-├── data/
-│   ├── api/              # Retrofit 网络层
-│   │   ├── ApiService.kt       # 接口定义 (POST /v1/compute, GET /health)
-│   │   ├── ApiModels.kt        # 请求/响应数据模型
-│   │   └── RetrofitClient.kt   # Retrofit 单例 (支持动态 baseUrl)
-│   ├── db/               # Room 数据库
-│   │   ├── HistoryEntity.kt    # 历史记录实体
-│   │   ├── HistoryDao.kt       # DAO 操作
-│   │   └── AppDatabase.kt      # 数据库实例
-│   ├── engine/           # 计算引擎
-│   │   ├── GraphDetector.kt    # 函数类型检测 (线性/极坐标/参数/隐式)
-│   │   └── LatexParser.kt      # LaTeX 预览解析器
-│   └── settings/         # 设置管理
-│       └── SettingsManager.kt  # DataStore 封装
-├── ui/
-│   ├── screen/           # 页面
-│   │   ├── CalculatorScreen.kt # 计算器页
-│   │   ├── GraphScreen.kt      # 绘图页
-│   │   └── HistoryScreen.kt    # 历史页
-│   ├── component/        # 组件
-│   │   ├── InputPanel.kt       # 输入面板 (含绘图跳转按钮)
-│   │   ├── ResultPanel.kt      # 结果展示
-│   │   ├── ScientificKeyboard.kt # 科学键盘
-│   │   ├── FunctionPanel.kt    # 函数与模板面板
-│   │   ├── KatexWebView.kt     # KaTeX WebView 渲染器
-│   │   ├── GraphWebView.kt     # 函数绘图 WebView
-│   │   └── DrawerMenu.kt       # 侧边菜单
-│   ├── viewmodel/        # 状态管理
-│   │   ├── CalculatorViewModel.kt # 计算器状态
-│   │   └── HistoryViewModel.kt    # 历史记录状态
-│   └── theme/            # Material3 主题
-│       ├── Color.kt
-│       ├── Type.kt
-│       └── Theme.kt
-├── navigation/           # 路由导航
-│   ├── Screen.kt         # 路由定义
-│   └── NavGraph.kt       # 导航图
-├── MainActivity.kt       # 单 Activity 入口
-└── WarerApplication.kt   # Application 初始化
+
+`core` 是**零 Android 依赖**的纯 Kotlin 模块，公式排版、编辑逻辑、计算链路全在里面，因此可以跑纯 JVM 测试，**不需要模拟器**，反馈在秒级。
+
+### 常见问题
+
+**打包时 `jlink executable ... does not exist`**
+Gradle 守护进程选到了一个 JRE。指定完整 JDK 即可：
+
+```bash
+# 方式一：命令行传入
+./gradlew :app:assembleDebug -Dorg.gradle.java.home=/path/to/jdk-21
+
+# 方式二：写入用户级配置（一次搞定，推荐）
+# ~/.gradle/gradle.properties
+org.gradle.java.home=/path/to/jdk-21
 ```
 
 ---
 
-## 🔗 连接后端
+## 项目结构
 
-应用默认连接 `http://121.40.223.203/`（公网部署），可通过侧边菜单修改服务器地址。
+```
+android/
+├── core/                          纯 Kotlin 模块，零 Android 依赖
+│   ├── engine/                    能力分层与本地数值计算
+│   ├── formula/
+│   │   ├── model/                 公式 AST
+│   │   ├── layout/                排版引擎（em 几何 → 绘制指令）
+│   │   ├── edit/                  编辑操作 · 光标定位 · 撤销重做
+│   │   └── convert/               AST → 计算引擎命令
+│   └── graph/                     绘图模式检测
+│
+└── app/                           UI 与平台集成
+    ├── ui/formula/                公式编辑器渲染与交互
+    ├── ui/screen/                 计算 · 绘图 · 历史
+    ├── ui/component/              科学键盘 · 结果面板 · 抽屉菜单
+    ├── ui/viewmodel/              状态管理
+    ├── data/                      Room · DataStore · Retrofit
+    └── navigation/                路由
+```
 
-开发时可在本地启动后端：
+---
+
+## 连接后端
+
+符号计算需要后端支持。应用默认连接 `http://121.40.223.203/`，可在侧边菜单中修改服务器地址。
+
+本地启动后端：
 
 ```bash
 cd backend
@@ -153,68 +126,29 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-### 网络配置
-
-`res/xml/network_security_config.xml` 中使用 `<base-config cleartextTrafficPermitted="true" />` 允许明文 HTTP 流量，方便开发环境连接任意后端地址。
-
 ---
 
-## 🧠 混合计算流程
+## 技术栈
 
-```
-用户输入
-  ├─ 需要符号计算？  (检测 symbolic 关键词 / 矩阵字面量 / 独立变量)
-  │   ├─ 否 → mXparser 本地计算
-  │   │          ├─ 数值结果 → 智能四舍五入为常见分数 (1/2..1/12)
-  │   │          └─ 显示 "离线" 标记
-  │   └─ 是 → Retrofit 请求云端 (POST /v1/compute)
-  │              ├─ 成功 → 展示 LaTeX 结果 + "云端" 标记
-  │              ├─ 云端报错 → 尝试本地降级
-  │              └─ 网络异常 → 显示网络错误 / 本地降级
-```
-
-### LaTeX 预览解析
-
-内置递归下降解析器（`LatexParser.kt`），与 Web 端共享相同解析逻辑：
-
-| 输入 | LaTeX 输出 |
+| 模块 | 选型 |
 | :--- | :--- |
-| `a/b` | `\frac{a}{b}` |
-| `x^2` | `x^{2}` |
-| `sin(x)^2` | `\sin^{2}\left(x\right)` |
-| `sqrt(x)` | `\sqrt{x}` |
-| `limit(sin(x)/x, x, 0)` | `\lim_{x \to 0} \frac{\sin(x)}{x}` |
-| `diff(x^2, x)` | `\frac{d}{d x}\left(x^{2}\right)` |
-| `integrate(x^2, x, 0, 1)` | `\int_{0}^{1} x^{2} \, d x` |
-| `[[1,2],[3,4]]` | `\begin{pmatrix}1 & 2 \\ 3 & 4\end{pmatrix}` |
+| UI | Jetpack Compose + Material3 |
+| 架构 | MVVM + 单向数据流 |
+| 公式排版 | 自研 Compose Canvas 引擎（无 WebView、无 KaTeX） |
+| 本地计算 | mXparser |
+| 函数绘图 | WebView + function-plot |
+| 网络 | Retrofit + OkHttp + kotlinx-serialization |
+| 存储 | Room + DataStore Preferences |
+| 导航 | Navigation Compose |
+| 构建 | AGP 9.1.1 · Kotlin 2.2.10 · Compose BOM 2026.02.01 |
 
 ---
 
-## 📝 待实现功能
+## 开发提示
 
-### 功能完善
-- [ ] **图像导出** — 函数图像保存为图片
-- [ ] **关键点标注** — 自动计算并标注零点、极值点
+改动排版或编辑逻辑后，先跑 `:core:test`（秒级、无需模拟器）：
 
-### UI/UX 优化
-- [ ] **移动端触控优化** — 更好的手势支持
-- [ ] **横屏自适应** — 横屏时左侧显示公式，右侧键盘
-- [ ] **错误位置高亮** — 在输入框中标记语法错误位置
-- [ ] **键盘快捷键** — 外接键盘支持
-- [ ] **帮助页面** — 功能使用引导
-
-### 个性化设置
-- [ ] **主题色自定义** — 可自定义主题色
-- [ ] **历史记录导出** — 导出历史记录
-- [ ] **精度控制** — 可调节小数保留位数
-
----
-
-## 📜 设计理念
-
-**精准、锋利、一触即发**
-
-- **简洁小巧** — 不追求大而全，专注于核心计算需求
-- **上手容易** — 直观的操作方式，无需学习成本
-- **跨平台一致** — 与 Web 端共享计算引擎和渲染逻辑
-- **离线优先** — 基础运算无需网络，确保随时可用
+```bash
+./gradlew :core:test
+./gradlew :core:test --tests '*FormulaLayoutTest*'   # 只跑某一类
+```
