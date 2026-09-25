@@ -14,6 +14,9 @@ private val Context.dataStore by preferencesDataStore(name = "warer_settings")
 class SettingsManager(private val context: Context) {
 
     companion object {
+        /** 符号计算后端地址。与 `BuildConfig.DEFAULT_API_BASE` 保持一致。 */
+        const val DEFAULT_BASE_URL = "http://localhost:8000/"
+
         private val KEY_BASE_URL = stringPreferencesKey("base_url")
         private val KEY_THEME_MODE = stringPreferencesKey("theme_mode")
         private val KEY_PRECISION = intPreferencesKey("precision")
@@ -21,7 +24,7 @@ class SettingsManager(private val context: Context) {
     }
 
     val baseUrl: Flow<String> = context.dataStore.data.map { prefs ->
-        prefs[KEY_BASE_URL] ?: "http://121.40.223.203/"
+        prefs[KEY_BASE_URL] ?: DEFAULT_BASE_URL
     }
 
     val themeMode: Flow<String> = context.dataStore.data.map { prefs ->

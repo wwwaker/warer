@@ -10,6 +10,7 @@ import androidx.compose.runtime.remember
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.wwwaker.warer_android.ui.formula.FormulaEditorViewModel
 import com.wwwaker.warer_android.ui.screen.MainScaffold
 import com.wwwaker.warer_android.ui.theme.WarerAndroidTheme
 import com.wwwaker.warer_android.ui.viewmodel.CalculatorViewModel
@@ -30,14 +31,21 @@ class MainActivity : ComponentActivity() {
                 factory = object : ViewModelProvider.Factory {
                     @Suppress("UNCHECKED_CAST")
                     override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                        return CalculatorViewModel(
-                            settingsManager = settingsManager,
-                            historyDao = historyDao
-                        ) as T
+                        return CalculatorViewModel(historyDao = historyDao) as T
                     }
                 }
             )
             val historyViewModel: HistoryViewModel = viewModel()
+
+            // 公式编辑器是主界面的一部分，状态必须活到 Activity 级，否则切 Tab 会丢输入
+            val formulaEditorViewModel: FormulaEditorViewModel = viewModel(
+                factory = object : ViewModelProvider.Factory {
+                    @Suppress("UNCHECKED_CAST")
+                    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                        return FormulaEditorViewModel(historyDao = historyDao) as T
+                    }
+                }
+            )
 
             WarerAndroidTheme(
                 themeMode = themeMode,
@@ -46,6 +54,7 @@ class MainActivity : ComponentActivity() {
                 MainScaffold(
                     settingsManager = settingsManager,
                     viewModel = calculatorViewModel,
+                    formulaViewModel = formulaEditorViewModel,
                     historyViewModel = historyViewModel
                 )
             }

@@ -1,103 +1,44 @@
 package com.wwwaker.warer_android.ui.screen
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.wwwaker.warer.core.graph.GraphDetector
-import com.wwwaker.warer_android.ui.component.InputPanel
-import com.wwwaker.warer_android.ui.component.ResultPanel
-import com.wwwaker.warer_android.ui.component.ScientificKeyboard
+import com.wwwaker.warer_android.ui.formula.FormulaEditorPane
+import com.wwwaker.warer_android.ui.formula.FormulaEditorViewModel
 import com.wwwaker.warer_android.ui.viewmodel.CalculatorViewModel
 
+/**
+ * 计算页 —— **公式编辑器就是主输入**。
+ *
+ * 这里不再有单行文本框，也没有 KaTeX WebView：输入与结果都由
+ * [FormulaEditorPane]（自研 Compose Canvas 排版引擎）承担，因此断网也能正常显示。
+ */
 @Composable
 fun CalculatorScreen(
     viewModel: CalculatorViewModel,
-    navController: NavHostController
+    formulaViewModel: FormulaEditorViewModel,
+    navController: NavHostController,
+    modifier: Modifier = Modifier
 ) {
-    val uiState by viewModel.uiState.collectAsState()
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 8.dp)
-    ) {
-        // Scrollable area: input + preview + result
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()
-                .verticalScroll(rememberScrollState())
-                .padding(vertical = 8.dp)
-        ) {
-            InputPanel(
-                input = uiState.input,
-                cursorPosition = uiState.cursorPosition,
-                previewLatex = uiState.previewLatex,
-                bracketHint = uiState.bracketHint,
-                onInputChange = { viewModel.onInputChange(it) },
-                onCursorPositionChange = { viewModel.setCursorPosition(it) },
-                onAutoFix = { viewModel.autoFixBrackets() },
-                canPlot = uiState.input.isNotBlank() && Regex("""[a-zA-Z]""").containsMatchIn(
-                    uiState.input.replace(Regex("""^[yY]\s*=\s*"""), "")
-                ),
-                onPlot = {
-                    val rawExpr = uiState.input.trim()
-                    if (rawExpr.isEmpty()) return@InputPanel
-                    val detection = GraphDetector.detect(rawExpr)
-                    if (detection.expr.isNotEmpty()) {
-                        viewModel.addGraphFunction(
-                            expr = detection.expr,
-                            fnType = detection.type,
-                            xExpr = detection.xExpr,
-                            yExpr = detection.yExpr
-                        )
-                        navController.navigate("graph") {
-                            popUpTo("calculator") { saveState = true }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
-                    }
+    FormulaEditorPane(
+        viewModel = formulaViewModel,
+        modifier = modifier,
+        onPlot = { command ->
+            val detection = GraphDetector.detect(command)
+            if (detection.expr.isNotEmpty()) {
+                viewModel.addGraphFunction(
+                    expr = detection.expr,
+                    fnType = detection.type,
+                    xExpr = detection.xExpr,
+                    yExpr = detection.yExpr
+                )
+                navController.navigate("graph") {
+                    popUpTo("calculator") { saveState = true }
+                    launchSingleTop = true
+                    restoreState = true
                 }
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            ResultPanel(
-                output = uiState.output,
-                isComputing = uiState.isComputing
-            )
+            }
         }
-
-        Spacer(modifier = Modifier.height(4.dp))
-
-        // Keyboard
-        Surface(
-            color = MaterialTheme.colorScheme.surface,
-            tonalElevation = 2.dp
-        ) {
-            ScientificKeyboard(
-                onKeyPressed = { key ->
-                    when (key) {
-                        "COMPUTE" -> viewModel.compute()
-                        "BACKSPACE" -> viewModel.backspace()
-                        "CLEAR" -> viewModel.clearInput()
-                        else -> viewModel.appendInput(key)
-                    }
-                }
-            )
-        }
-    }
+    )
 }

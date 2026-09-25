@@ -26,7 +26,9 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        buildConfigField("String", "DEFAULT_API_BASE", "\"http://121.40.223.203/\"")
+        // 符号计算后端。默认指向本机：真机通过 `adb reverse tcp:8000 tcp:8000` 映射到开发机，
+        // 模拟器则直接可用（模拟器的 localhost 就是宿主机）。
+        buildConfigField("String", "DEFAULT_API_BASE", "\"http://localhost:8000/\"")
     }
 
     buildTypes {

@@ -116,7 +116,7 @@ android/
 
 ## 连接后端
 
-符号计算需要后端支持。应用默认连接 `http://121.40.223.203/`，可在侧边菜单中修改服务器地址。
+符号计算需要后端支持。应用默认连接 `http://localhost:8000/`，可在侧边菜单中修改服务器地址。
 
 本地启动后端：
 
@@ -124,6 +124,12 @@ android/
 cd backend
 pip install -r requirements.txt
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+真机调试时还需要把设备的 8000 端口映射到开发机（模拟器不需要）：
+
+```bash
+adb reverse tcp:8000 tcp:8000
 ```
 
 ---

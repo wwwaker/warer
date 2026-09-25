@@ -152,7 +152,9 @@ fun HistoryScreen(
                             onClick = {
                                 when (entry.type) {
                                     "calculation" -> {
-                                        calculatorViewModel.onInputChange(entry.input)
+                                        // TODO(P1 后续)：把历史记录回填进公式编辑器，
+                                        // 需要一个「引擎命令 → AST」的还原器（CommandBuilder 的逆）。
+                                        // 目前先只跳到计算页，避免把文本塞进已经不存在的输入框。
                                         navController.navigate("calculator") {
                                             popUpTo("calculator") { saveState = true }
                                             launchSingleTop = true

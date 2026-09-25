@@ -11,6 +11,7 @@ import com.wwwaker.warer_android.data.settings.SettingsManager
 import com.wwwaker.warer_android.navigation.Screen
 import com.wwwaker.warer_android.navigation.WarerNavGraph
 import com.wwwaker.warer_android.ui.component.DrawerMenu
+import com.wwwaker.warer_android.ui.formula.FormulaEditorViewModel
 import com.wwwaker.warer_android.ui.viewmodel.CalculatorViewModel
 import com.wwwaker.warer_android.ui.viewmodel.HistoryViewModel
 import kotlinx.coroutines.launch
@@ -19,6 +20,7 @@ import kotlinx.coroutines.launch
 fun MainScaffold(
     settingsManager: SettingsManager,
     viewModel: CalculatorViewModel,
+    formulaViewModel: FormulaEditorViewModel,
     historyViewModel: HistoryViewModel
 ) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -49,6 +51,7 @@ fun MainScaffold(
     ) {
         WarerNavGraph(
             viewModel = viewModel,
+            formulaViewModel = formulaViewModel,
             historyViewModel = historyViewModel,
             onOpenDrawer = { scope.launch { drawerState.open() } },
             navController = navController

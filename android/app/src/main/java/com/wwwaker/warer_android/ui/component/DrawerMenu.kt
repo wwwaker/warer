@@ -112,7 +112,7 @@ fun DrawerMenu(
             value = baseUrl,
             onValueChange = { baseUrl = it },
             modifier = Modifier.fillMaxWidth(),
-            placeholder = { Text("http://121.40.223.203/") },
+            placeholder = { Text(SettingsManager.DEFAULT_BASE_URL) },
             singleLine = true
         )
         Spacer(modifier = Modifier.height(4.dp))
